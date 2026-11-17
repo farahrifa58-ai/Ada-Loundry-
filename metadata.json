@@ -1,0 +1,6 @@
+{
+  "name": "ADA LAUNDRY",
+  "description": "Aplikasi kasir dan manajemen usaha laundry profesional untuk pemilik dan kasir.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

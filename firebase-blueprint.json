@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "ShopProfile": {
+      "title": "ShopProfile",
+      "description": "Outlet laundry profile and owner-managed application settings",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "description": "Firebase Auth UID of the shop owner" },
+        "ownerEmail": { "type": "string", "description": "Google email of the shop owner" },
+        "businessName": { "type": "string", "description": "Laundry outlet name" },
+        "address": { "type": "string", "description": "Outlet physical address" },
+        "phone": { "type": "string", "description": "Outlet contact phone number" },
+        "operatingHours": { "type": "string", "description": "Operating hours display string" },
+        "notaPrefix": { "type": "string", "description": "Prefix for generated receipt numbers" },
+        "logoUri": { "type": "string", "description": "Optional local or content URI for custom logo" },
+        "printerName": { "type": "string", "description": "Saved printer display name if configured" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": ["ownerUid", "ownerEmail", "businessName", "address", "phone", "operatingHours", "notaPrefix", "createdAt", "updatedAt"]
+    },
+    "OrderCounter": {
+      "title": "OrderCounter",
+      "description": "Atomic sequence counter for unique receipt numbers",
+      "type": "object",
+      "properties": {
+        "seq": { "type": "integer", "description": "Monotonic order sequence number" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
+      },
+      "required": ["seq", "updatedAt"]
+    },
+    "StaffInvite": {
+      "title": "StaffInvite",
+      "description": "Cashier invitation and role configuration managed by owner",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "ownerUid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "staffUid": { "type": "string" },
+        "role": { "type": "string", "enum": ["KASIR"] },
+        "active": { "type": "boolean" },
+        "permissions": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "ownerUid", "name", "email", "staffUid", "role", "active", "permissions", "createdAt", "updatedAt"]
+    },
+    "StaffMember": {
+      "title": "StaffMember",
+      "description": "Bound active cashier authorization record keyed by UID",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "inviteId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["KASIR"] },
+        "active": { "type": "boolean" },
+        "permissions": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "inviteId", "name", "email", "role", "active", "permissions", "createdAt", "updatedAt"]
+    },
+    "LaundryService": {
+      "title": "LaundryService",
+      "description": "Owner-configured service catalog item (Kiloan, Satuan, Karpet, Extra fee)",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["KILOAN", "SATUAN", "KARPET"] },
+        "unitLabel": { "type": "string", "enum": ["kg", "pcs", "lembar"] },
+        "price": { "type": "integer" },
+        "isExtraFee": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "name", "category", "unitLabel", "price", "isExtraFee", "active", "createdAt", "updatedAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Laundry customer profile and aggregate order statistics",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "lastTransactionAtMillis": { "type": "integer" },
+        "transactionCount": { "type": "integer" },
+        "totalSpent": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "name", "phone", "lastTransactionAtMillis", "transactionCount", "totalSpent", "createdAt", "updatedAt"]
+    },
+    "LaundryOrder": {
+      "title": "LaundryOrder",
+      "description": "Laundry transaction with snapshot pricing, payment state, status history, and WhatsApp open logs",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "notaNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "integer" },
+        "discount": { "type": "integer" },
+        "extraFee": { "type": "integer" },
+        "extraFeeLabel": { "type": "string" },
+        "totalAmount": { "type": "integer" },
+        "paidAmount": { "type": "integer" },
+        "remainingAmount": { "type": "integer" },
+        "paymentStatus": { "type": "string", "enum": ["UNPAID", "DP", "PAID"] },
+        "paymentMethod": { "type": "string", "enum": ["CASH", "TRANSFER", "QRIS"] },
+        "orderStatus": { "type": "string", "enum": ["RECEIVED", "PROCESSING", "READY", "COMPLETED", "CANCELLED"] },
+        "notes": { "type": "string" },
+        "estimatedFinishAtMillis": { "type": "integer" },
+        "transactionAtMillis": { "type": "integer" },
+        "statusHistory": { "type": "array" },
+        "paymentHistory": { "type": "array" },
+        "whatsappLogs": { "type": "array" },
+        "cashierUid": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "cancelReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "notaNumber", "customerId", "customerName", "customerPhone", "items", "subtotal", "discount", "extraFee", "totalAmount", "paidAmount", "remainingAmount", "paymentStatus", "paymentMethod", "orderStatus", "estimatedFinishAtMillis", "transactionAtMillis", "statusHistory", "paymentHistory", "whatsappLogs", "cashierUid", "cashierName", "createdAt", "updatedAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Owner-recorded business operational expense",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "integer" },
+        "dateMillis": { "type": "integer" },
+        "notes": { "type": "string" },
+        "createdByUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "category", "amount", "dateMillis", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "ExpenseCategory": {
+      "title": "ExpenseCategory",
+      "description": "Owner-managed expense category",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "name": { "type": "string" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "name", "isDefault", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Append-only audit trail of important business operations",
+      "type": "object",
+      "properties": {
+        "shopId": { "type": "string" },
+        "actorUid": { "type": "string" },
+        "actorName": { "type": "string" },
+        "actorRole": { "type": "string", "enum": ["OWNER", "KASIR"] },
+        "actionType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shopId", "actorUid", "actorName", "actorRole", "actionType", "targetId", "description", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/shops/{shopId}": {
+      "schema": { "$ref": "#/entities/ShopProfile" },
+      "description": "Outlet profile and owner settings"
+    },
+    "/shops/{shopId}/counters/{counterId}": {
+      "schema": { "$ref": "#/entities/OrderCounter" },
+      "description": "Atomic sequence counter for unique receipt numbers"
+    },
+    "/staffDirectory/{inviteId}": {
+      "schema": { "$ref": "#/entities/StaffInvite" },
+      "description": "Owner-created cashier directory indexed by Google email"
+    },
+    "/shops/{shopId}/staffMembers/{staffUid}": {
+      "schema": { "$ref": "#/entities/StaffMember" },
+      "description": "Bound active cashier RBAC records"
+    },
+    "/shops/{shopId}/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/LaundryService" },
+      "description": "Owner-managed laundry service catalog"
+    },
+    "/shops/{shopId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Laundry customers directory"
+    },
+    "/shops/{shopId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/LaundryOrder" },
+      "description": "Laundry orders and transaction records"
+    },
+    "/shops/{shopId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Owner-only operational expenses"
+    },
+    "/shops/{shopId}/expenseCategories/{categoryId}": {
+      "schema": { "$ref": "#/entities/ExpenseCategory" },
+      "description": "Owner-only expense categories"
+    },
+    "/shops/{shopId}/activityLogs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Append-only operational audit logs"
+    }
+  }
+}
